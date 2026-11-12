@@ -1,0 +1,23 @@
+<svg width="157" height="78" viewBox="0 0 157 78" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="&#229;&#173;&#166;&#228;&#185;&#160; / &#229;&#164;&#141;&#228;&#185;&#160; &#194;&#183; &#231;&#142;&#187;&#231;&#146;&#131;&#230;&#130;&#172;&#230;&#181;&#174;&#229;&#141;&#161;&#231;&#137;&#135;" filter="url(#filter0_d_3_64)">
+<rect x="12" y="9" width="133" height="54" rx="12" fill="#FCFFFC" fill-opacity="0.8"/>
+<rect x="12.5" y="9.5" width="132" height="53" rx="11.5" stroke="white" stroke-opacity="0.82"/>
+<text id="&#230;&#150;&#176;&#229;&#173;&#166;" fill="#405548" style="white-space: pre" xml:space="preserve" font-family="Noto Sans SC" font-size="22" font-weight="bold" letter-spacing="0em"><tspan x="38" y="47.8">&#x590d;&#x4e60;</tspan></text>
+<g id="&#229;&#174;&#140;&#230;&#136;&#144;&#230;&#149;&#176;">
+<text id="0" fill="#202320" style="white-space: pre" xml:space="preserve" font-family="Noto Sans SC" font-size="14" font-weight="bold" letter-spacing="0em"><tspan x="93" y="46.6">0</tspan></text>
+<text id="/ 10" fill="#616762" style="white-space: pre" xml:space="preserve" font-family="Noto Sans SC" font-size="12" letter-spacing="0em"><tspan x="104" y="45.8">/ 9</tspan></text>
+</g>
+</g>
+<defs>
+<filter id="filter0_d_3_64" x="0" y="0" width="157" height="78" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="3"/>
+<feGaussianBlur stdDeviation="6"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.12 0 0 0 0 0.14 0 0 0 0 0.12 0 0 0 0.08 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_3_64"/>
+<feBlend mode="normal" in="BackgroundImageFix" in2="effect1_dropShadow_3_64" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+</filter>
+</defs>
+</svg>

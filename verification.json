@@ -1,0 +1,55 @@
+{
+  "date": "2026-11-12",
+  "timezone": "Asia/Shanghai",
+  "scope": "Local HTML/CSS design workbench; not native App acceptance",
+  "sources": {
+    "figmaFileKey": "WqjKYuFL5iIkLeA0Upez0m",
+    "rawExportSha256": "448203938ad9a308fa43519d5f8d1d5f521c964261ac7e27f6b85dec3adcef6a"
+  },
+  "data": {
+    "pages": 3,
+    "screenFrames": 31,
+    "proposalFrames": 4,
+    "mainComponents": 12,
+    "instances": 72,
+    "layers": 2007,
+    "variables": 27,
+    "collections": 2,
+    "routes": 13,
+    "originalVectorExportFailures": 51,
+    "recoveredIconContainers": 29,
+    "visibleUnresolvedVectors": 0,
+    "libraryAssets": 80,
+    "uniqueFigmaAssets": 144
+  },
+  "checks": [
+    "node --check app.js and renderer.js passed",
+    "node scripts/check.cjs passed: original layer IDs, assets, frame counts, variable resolution, alpha once, component propagation, original instance overrides",
+    "python3 scripts/test_server.py passed in temporary directory: save, backup, bundle, changes, reject cross-origin and malformed data",
+    "Real browser: all 35 screen/proposal frames and all 12 components rendered; no broken loaded images or unresolved visible vector nodes",
+    "Real browser: 224 library and original-asset cards, zero broken loaded images",
+    "Real browser: text draft edit and undo restored original",
+    "Real browser: primary component corner radius changed to 18 and propagated to login/retry instances; undo restored original",
+    "Real browser: green variable changed to #223344 and propagated to login buttons; undo restored original",
+    "Real browser: Save to project succeeded; on-disk edits verified empty after undo",
+    "Real browser: 360, 768, 1440 viewport document widths had no horizontal page overflow; 360 canvas, main, inspector each 360px",
+    "Real browser: 3 original dark frames, all #161616 backgrounds",
+    "Real browser: Noto Sans SC local font loaded; initial 35 frames had no detected text-height overflow",
+    "Real browser: independent HTML download succeeded; generated inline JavaScript syntax checked for both browser-exported and Python-built files",
+    "Real browser: Python-built standalone HTML rendered 35 frames, 0 external script sources, 0 external image sources, 0 console errors",
+    "Browser-exported standalone HTML also rendered 35 frames with zero broken images, zero external scripts and zero console errors after fixing JavaScript replacement-string dollar escaping"
+  ],
+  "screenshots": [
+    "qa/workbench-desktop.jpg"
+  ],
+  "appChanged": false,
+  "figmaChanged": false,
+  "deployed": false,
+  "businessTestsRun": false,
+  "limits": [
+    "Figma glass refraction and dispersion approximated with CSS; no pixel-perfect or native acceptance claim",
+    "No complete automatic-layout, prototype-business logic or Figma variant engine",
+    "Offline HTML checked by serving the self-contained file locally; no clean-machine native acceptance",
+    "Multi-file JSON export references assets relative to the workbench; use the full directory or independent HTML for portable handoff"
+  ]
+}
