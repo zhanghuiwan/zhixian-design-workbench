@@ -4,6 +4,10 @@
 - 仓库：https://github.com/zhanghuiwan/zhixian-design-workbench
 - 协作规则：[AGENTS.md](AGENTS.md)；每次改动记入 [CHANGELOG.md](CHANGELOG.md)，App 待应用项记入 [APP_SYNC.md](APP_SYNC.md)。
 
+## 三个视觉方向 · 独立待评审提案
+
+[打开方案评审](https://zhanghuiwan.github.io/zhixian-design-workbench/explorations/)：墨白编辑式、晴空专注式、暮色陪伴式，每组含闲闲、学习、我的，共 9 页。支持同页对比、窄屏与基本交互；原工作台、原画框和设计数据保持不变。源码及范围见 [explorations/README.md](explorations/README.md)。
+
 ## 换电脑继续设计
 
 ```bash
