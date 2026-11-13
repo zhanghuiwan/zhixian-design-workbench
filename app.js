@@ -31,25 +31,34 @@
   }
   function history(direction){const from=direction==='undo'?undo:redo,to=direction==='undo'?redo:undo;if(!from.length)return;to.push(JSON.stringify(edits));edits=JSON.parse(from.pop());refreshRenderer();saveDraft();renderCanvas();renderInspector();}
   function matchingFrames(){
-    return frames().filter(f=>view==='components'?f.category==='component':f.category!=='component')
+    return frames().filter(inView)
       .filter(f=>!pageFilter||f.pageId===pageFilter)
       .filter(f=>theme==='all'||(theme==='proposal'?f.category==='proposal':theme==='dark'?f.name.includes('深色'):!f.name.includes('深色')&&f.category!=='proposal'))
       .filter(f=>!search||leafNodes(node(f.id)).some(n=>(n.name+' '+(n.characters||'')).toLowerCase().includes(search.toLowerCase())));
   }
+  function inView(f){return view==='review'?f.category==='review':view==='components'?f.category==='component':f.category!=='component'&&f.category!=='review';}
   function renderNavigation(){
     const c=count();$('#inventory-count').textContent=`${c.screens+c.proposals} 画框 · ${c.components} 组件 · ${doc.variables.length} 变量`;
-    const names={pages:['albums-outline','页面',c.screens+c.proposals],components:['wordbooks','组件',c.components],tokens:['filter','颜色与排版',doc.variables.length],assets:['attachment','图标与图像',doc.workbench.assetLibrary.length],handoff:['text','开发交接','']};
+    const names={pages:['albums-outline','页面',c.screens+c.proposals],components:['wordbooks','组件',c.components],tokens:['filter','颜色与排版',doc.variables.length],assets:['attachment','图标与图像',doc.workbench.assetLibrary.length],handoff:['text','开发交接',''],review:['check-circle','审查方案',frames().filter(f=>f.category==='review').length]};
     names.pages[0]='list';
     $$('[data-view]').forEach(a=>{const [i,n,c]=names[a.dataset.view];a.innerHTML=icon(i)+`<span>${n}</span><small>${c}</small>`;a.classList.toggle('active',a.dataset.view===view);if(a.dataset.view===view)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
-    $('#directory-title').textContent=view==='components'?'组件目录':'页面目录';
+    $('#directory-title').textContent=view==='review'?'审查页面与组件':view==='components'?'组件目录':'页面目录';
     const dir=$('#directory');dir.replaceChildren();
-    for(const p of doc.pages){const entries=frames().filter(f=>f.pageId===p.id&&(view==='components'?f.category==='component':f.category!=='component')).filter(f=>!search||leafNodes(node(f.id)).some(n=>(n.name+' '+(n.characters||'')).toLowerCase().includes(search.toLowerCase())));if(!entries.length)continue;
+    for(const p of doc.pages){const entries=frames().filter(f=>f.pageId===p.id&&inView(f)).filter(f=>!search||leafNodes(node(f.id)).some(n=>(n.name+' '+(n.characters||'')).toLowerCase().includes(search.toLowerCase())));if(!entries.length)continue;
+      if(view==='review'){
+        for(const section of ['页面 · 浅色','页面 · 深色','新增组件 · 浅色','新增组件 · 深色']){
+          const group=entries.filter(f=>f.section===section);if(!group.length)continue;
+          const details=document.createElement('details');details.open=true;
+          const summary=document.createElement('summary');summary.textContent=section+' · '+group.length;details.append(summary);
+          for(const f of group){const b=document.createElement('button');b.className=f.id===focusFrame?'active':'';b.innerHTML='<span class="node-dot"></span>'+esc(f.name);b.onclick=()=>{location.hash='screen/'+encodeURIComponent(f.id);$('#sidebar').classList.remove('open');};details.append(b);}dir.append(details);
+        }continue;
+      }
       const details=document.createElement('details');details.open=true;const s=document.createElement('summary');s.textContent=p.name+' · '+entries.length;details.append(s);
       for(const f of entries){const b=document.createElement('button');b.className=(f.id===focusFrame?'active ':'')+(f.category==='proposal'?'proposal':'');b.innerHTML='<span class="node-dot"></span>'+esc(f.name.replace(/^\d+ · /,''));b.addEventListener('click',()=>{location.hash='screen/'+encodeURIComponent(f.id);$('#sidebar').classList.remove('open');});details.append(b);}dir.append(details);
     }
   }
   function showView(next, frame){view=next;focusFrame=frame||null;selected=frame||null;pageFilter=null;search='';$('#search').value='';renderNavigation();renderCanvas();renderInspector();}
-  function route(){const parts=location.hash.slice(1).split('/');if(parts[0]==='screen'&&byId(decodeURIComponent(parts[1]||''))){const f=byId(decodeURIComponent(parts[1]));showView(f.category==='component'?'components':'pages',f.id);}else showView(['pages','components','tokens','assets','handoff'].includes(parts[0])?parts[0]:'pages');}
+  function route(){const parts=location.hash.slice(1).split('/');if(parts[0]==='screen'&&byId(decodeURIComponent(parts[1]||''))){const f=byId(decodeURIComponent(parts[1]));showView(f.category==='review'?'review':f.category==='component'?'components':'pages',f.id);}else showView(['pages','components','tokens','assets','handoff','review'].includes(parts[0])?parts[0]:'pages');}
   function board(f,single=false){
     const n=effective(f.id),scale=single?zoom:Math.min(zoom,view==='components'?1:.8);
     const article=document.createElement('article');article.className='board-item';article.style.width=(n.width*scale)+'px';article.dataset.frameId=f.id;
@@ -58,15 +67,16 @@
     const scaled=document.createElement('div');scaled.className='frame-scale';scaled.style.transform=`scale(${scale})`;scaled.style.width=n.width+'px';scaled.style.height=n.height+'px';scaled.append(renderer.render(node(f.id),true));shell.append(scaled);article.append(shell);
     const meta=document.createElement('div');meta.className='screen-meta-line';meta.innerHTML=`<span>${Math.round(n.width)} × ${Math.round(n.height)} <span aria-hidden="true">·</span> ${esc(f.id)}</span>`;
     const open=document.createElement('button');open.textContent=single?'复制画框说明':'打开';open.addEventListener('click',()=>single?copySpec(f.id):location.hash='screen/'+encodeURIComponent(f.id));meta.append(open);article.append(meta);
-    if(f.category==='proposal'){const tag=document.createElement('small');tag.className='proposal-tag';tag.textContent='待确认提案';tag.style.marginTop='8px';article.append(tag);}return article;
+    if(f.category==='proposal'||f.category==='review'){const tag=document.createElement('small');tag.className=f.category==='review'?'review-tag':'proposal-tag';tag.textContent=f.category==='review'?(f.reviewKind==='component'?'新增可复用组件':'原设计基础上的审查页'):'待确认提案';tag.style.marginTop='8px';article.append(tag);}return article;
   }
   function renderCanvas(){
     const canvas=$('#canvas');canvas.replaceChildren();canvas.classList.toggle('doc-canvas',['tokens','assets','handoff'].includes(view));
-    const titles={pages:'全部页面',components:'组件库',tokens:'颜色与排版',assets:'图标与图像',handoff:'开发交接'};
+    const titles={pages:'全部页面',components:'组件库',tokens:'颜色与排版',assets:'图标与图像',handoff:'开发交接',review:'审查方案 · 原配色圆角菜单'};
     $('#view-title').textContent=focusFrame?effective(focusFrame).name:titles[view];$('#breadcrumbs').textContent='知闲 Android / '+(focusFrame?doc.pages.find(p=>p.id===byId(focusFrame).pageId).name:'设计资源 / '+titles[view]);
-    $('#overview').hidden=!focusFrame;$('#theme-filter-label').hidden=!!focusFrame||view!=='pages';$('#zoom-label').hidden=!['pages','components'].includes(view);
+    $('#overview').hidden=!focusFrame;$('#theme-filter-label').hidden=!!focusFrame||!['pages','review'].includes(view);$('#zoom-label').hidden=!['pages','components','review'].includes(view);
     if(view==='tokens'){renderTokens(canvas);return;}if(view==='assets'){renderAssets(canvas);return;}if(view==='handoff'){renderHandoff(canvas);return;}
     if(focusFrame){const wrap=document.createElement('div');wrap.className='single-board';wrap.append(board(byId(focusFrame),true));canvas.append(wrap);markSelection();return;}
+    if(view==='review'){renderReview(canvas);return;}
     const matching=matchingFrames();
     for(const p of doc.pages){const fs=matching.filter(f=>f.pageId===p.id);if(!fs.length)continue;
       for(const isProposal of [false,true]){
@@ -79,6 +89,20 @@
     if(!matching.length){canvas.innerHTML='<div class="empty-results"><h2>没有匹配的画框</h2><p>试试其他名称，或清除主题筛选。</p></div>';}
     markSelection();
   }
+  function renderReview(canvas){
+    const intro=document.createElement('div');intro.className='review-intro';
+    intro.innerHTML='<strong>原设计 + 圆角菜单</strong><p>沿用原配色、字体、图标、闲闲角色和悬浮玻璃导航；新学 / 复习保留原组件，学习页移除“开始学习”。浅深色均可查看，菜单和页面图层可以直接选择、修改。</p><a href="explorations/">查看上一轮三个视觉方向 ↗</a>';
+    canvas.append(intro);
+    const matching=matchingFrames();
+    for(const section of ['页面 · 浅色','页面 · 深色','新增组件 · 浅色','新增组件 · 深色']){
+      const group=matching.filter(f=>f.section===section);if(!group.length)continue;
+      const h=document.createElement('div');h.className='collection-header';const title=document.createElement('h2');title.textContent=section;
+      const total=document.createElement('span');total.textContent=group.length+(section.startsWith('页面')?' 个页面':' 个组件');title.append(total);h.append(title);canvas.append(h);
+      const grid=document.createElement('div');grid.className='board-grid';group.forEach(f=>grid.append(board(f)));canvas.append(grid);
+    }
+    if(!matching.length){const empty=document.createElement('p');empty.className='text-note';empty.textContent='没有匹配的审查页面或组件。';canvas.append(empty);}
+    markSelection();
+  }
   function markSelection(){$$('.design-node.selected').forEach(el=>el.classList.remove('selected'));if(selected)$$('.design-node').filter(el=>el.dataset.nodeId===selected).forEach(el=>el.classList.add('selected'));}
   function headerSection(title,html){return `<section class="inspector-section"><h3>${title}</h3>${html}</section>`;}
   function field(label,key,value,type='number',attrs=''){return `<label class="field">${label}<input type="${type}" data-prop="${key}" value="${esc(value)}" ${attrs}></label>`;}
@@ -87,7 +111,7 @@
     const p=$('#properties');p.replaceChildren();const n=selected&&node(selected)?effective(selected):null;
     if(!n){const c=count();p.innerHTML=`<div class="inspector-empty">${icon('filter')}<h2>从设计到 App</h2><p class="text-note" style="margin-top:12px">选择画框或图层，查看和修改设计属性。</p><div class="stat-grid"><div><strong>${c.screens+c.proposals}</strong><span>页面与状态</span></div><div><strong>${c.components}</strong><span>主组件</span></div><div><strong>${doc.variables.length}</strong><span>颜色变量</span></div><div><strong>2007</strong><span>原稿图层</span></div></div></div>`+headerSection('本轮来源',`<p>Figma · 2026-11-12</p><p>当前 App 源码用于页面映射、补齐图标与素材。画布以 Figma 为准。</p><p>4 个提案画框单独标记，尚未应用到 App。</p>`)+headerSection('保存方式','<p>修改自动保存在此浏览器。本地点击“保存到项目”；线上先“导出修改文件”，在本地仓库导入并提交。</p>')+headerSection('渲染边界','<p>玻璃折射采用 CSS 近似。字体、系统安全区和动态行为仍需 App 核对。</p><a class="subtle-link" href="#handoff">查看来源与差异</a>');renderLayers();return;}
     const f=byId(frameFor(n.id));const parent=renderer.parents.get(n.id);
-    p.innerHTML=`<div class="inspector-section"><div class="inspector-name">${esc(n.name)}</div><div class="inspector-meta"><span>${esc(n.type)}</span><code>${esc(n.id)}</code></div>${f?.category==='proposal'?'<span class="proposal-tag" style="margin-top:10px">待确认提案</span>':''}</div>`;
+    p.innerHTML=`<div class="inspector-section"><div class="inspector-name">${esc(n.name)}</div><div class="inspector-meta"><span>${esc(n.type)}</span><code>${esc(n.id)}</code></div>${f?.category==='review'?'<span class="review-tag" style="margin-top:10px">审查提案 · 待评审</span>':f?.category==='proposal'?'<span class="proposal-tag" style="margin-top:10px">待确认提案</span>':''}</div>`;
     p.insertAdjacentHTML('beforeend',headerSection('图层',`<div class="form-grid">${field('名称','name',n.name,'text','class="name-input"')}<label class="field">可见<input type="checkbox" data-prop="visible" ${n.visible!==false?'checked':''}></label></div>`));
     if(n.type==='TEXT')p.insertAdjacentHTML('beforeend',headerSection('文字',`<div class="form-grid"><label class="field full">内容<textarea data-prop="characters">${esc(n.characters)}</textarea></label>${field('字号','fontSize',n.fontSize||n.segments?.[0]?.fontSize||14,'number','min="1" max="300" step="1"')}${field('字重','fontWeight',n.fontWeight||400,'number','min="100" max="900" step="100"')}${field('行高 px','lineHeight',n.lineHeight?.value||20,'number','min="1" max="500"')}</div>`));
     p.insertAdjacentHTML('beforeend',headerSection('布局',`<div class="form-grid">${field('X','x',Number(n.x||0).toFixed(1))}${field('Y','y',Number(n.y||0).toFixed(1))}${field('宽 W','width',Number(n.width).toFixed(1),'number','min="1" max="10000"')}${field('高 H','height',Number(n.height).toFixed(1),'number','min="1" max="10000"')}${field('圆角','cornerRadius',n.cornerRadius||0,'number','min="0"')}${field('不透明度 %','opacity',Math.round((n.opacity??1)*100),'number','min="0" max="100"')}</div>`));
@@ -96,10 +120,11 @@
       p.insertAdjacentHTML('beforeend',headerSection(n.type==='TEXT'?'文字颜色':'填充',`<div class="color-control"><input id="fill-color" type="color" value="${DesignRenderer.hex(c)}" aria-label="图层颜色"><input id="fill-hex" type="text" value="${DesignRenderer.hex(c)}" aria-label="图层颜色十六进制"></div><label class="field" style="margin-top:10px">填充透明度 %<input id="fill-alpha" type="number" min="0" max="100" value="${Math.round((c.a??paint.opacity??1)*100)}"></label>${bound?`<p>绑定变量：<code>${esc(doc.variables.find(v=>v.id===bound)?.name||bound)}</code></p><p class="hint">单层改色会解除该填充绑定；全局改色请在“颜色与排版”中修改变量。</p>`:''}`));
     }
     if(n.iconAsset||n.fills?.some(p=>p.type==='IMAGE'))p.insertAdjacentHTML('beforeend',headerSection('图像与图标',`<p>${n.iconAsset?'App 同源 SVG 图标':'Figma 导出原始图像'}</p><code>${esc(n.iconAsset||doc.assets[n.fills.find(p=>p.type==='IMAGE').imageHash])}</code><button id="replace-image" class="button">从素材库替换</button>`));
+    if(n.sourceNodeId)p.insertAdjacentHTML('beforeend',headerSection('复用来源',`<p>沿用原设计的图层、组件或素材。</p><code>${esc(n.sourceNodeId)}</code>${(byId(f?.sourceFrameId)||frameFor(n.sourceNodeId))?`<a class="subtle-link" style="display:block;margin-top:8px" href="#screen/${encodeURIComponent(byId(f?.sourceFrameId)?f.sourceFrameId:frameFor(n.sourceNodeId))}">查看原设计</a>`:''}`));
     if(n.type==='COMPONENT'||n.id.includes(';'))p.insertAdjacentHTML('beforeend',headerSection('组件关系',`<p>${n.type==='COMPONENT'?'修改此主组件的显式属性会同步到引用它的实例；文字内容通过原始子图层 ID 同步。':'保留了主组件子图层 ID。实例的单独修改优先于主组件修改。'}</p>`));
     if(n.type==='INSTANCE')p.insertAdjacentHTML('beforeend',headerSection('组件实例',`<code>${esc(n.mainComponentId)}</code>${byId(n.mainComponentId)?`<button id="open-master" class="button">查看主组件</button>`:''}`));
     if(n.effects?.length)p.insertAdjacentHTML('beforeend',headerSection('效果',`<p>${n.effects.filter(e=>e.visible!==false).map(e=>e.type==='GLASS'?'玻璃 · CSS 模糊近似':e.type).join(' / ')}</p><details><summary class="hint">原始效果参数</summary><pre>${esc(JSON.stringify(n.effects,null,2))}</pre></details>`));
-    p.insertAdjacentHTML('beforeend',headerSection('开发引用',`<p>${f?.route?'路由：'+esc(f.route):esc(f?.status||'Figma 图层')}</p><code>design.json → ${esc(n.id)}</code>${parent?`<button id="parent-layer" class="button">选择父级 · ${esc(parent.name)}</button>`:''}<button id="copy-layer" class="button">复制图层 JSON</button><button id="copy-css" class="button">复制图层 CSS</button><a class="subtle-link" style="display:block;margin-top:12px" href="https://www.figma.com/design/${doc.workbench.figmaFileKey}?node-id=${n.id.replace(':','-')}" target="_blank" rel="noopener">在 Figma 中查看 ↗</a>`));
+    p.insertAdjacentHTML('beforeend',headerSection('开发引用',`<p>${f?.route?'路由：'+esc(f.route):esc(f?.status||'Figma 图层')}</p><code>design.json → ${esc(n.id)}</code>${parent?`<button id="parent-layer" class="button">选择父级 · ${esc(parent.name)}</button>`:''}<button id="copy-layer" class="button">复制图层 JSON</button><button id="copy-css" class="button">复制图层 CSS</button>${f?.category==='review'?'':`<a class="subtle-link" style="display:block;margin-top:12px" href="https://www.figma.com/design/${doc.workbench.figmaFileKey}?node-id=${n.id.replace(':','-')}" target="_blank" rel="noopener">在 Figma 中查看 ↗</a>`}`));
     p.insertAdjacentHTML('beforeend','<button id="apply-properties" class="button" style="width:100%">应用属性修改</button>');
     const patchFromInput=input=>{
       const key=input.dataset.prop;let value=input.type==='checkbox'?input.checked:input.type==='number'?Number(input.value):input.value;
@@ -176,7 +201,7 @@
       function replace(n){if(n.asset)n.asset=embedded[n.asset]||n.asset;if(n.iconAsset)n.iconAsset=embedded[n.iconAsset]||n.iconAsset;(n.children||[]).forEach(replace);}d.pages.forEach(replace);Object.values(d.workbench.edits?.nodes||{}).forEach(replace);for(const k in d.assets)d.assets[k]=embedded[d.assets[k]]||d.assets[k];d.workbench.assetLibrary.forEach(a=>a.path=embedded[a.path]||a.path);
       let css=await (await fetch('workbench.css')).text();const font=await fetch('assets/fonts/NotoSansSC-VF.ttf');if(font.ok){const data=await new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);font.blob().then(blob=>reader.readAsDataURL(blob));});css=css.replace('assets/fonts/NotoSansSC-VF.ttf',data);}
       // Inline UI icon paths as well, so the application shell works offline.
-      const uiIcons={};for(const name of ['list','wordbooks','filter','attachment','text','search','back','forward','more']){const path='assets/icons/'+name+'.svg';uiIcons[path]=embedded[path]||await (async()=>{const r=await fetch(path);return 'data:image/svg+xml;base64,'+btoa(await r.text());})();}
+      const uiIcons={};for(const name of ['list','wordbooks','filter','attachment','text','search','back','forward','more','check-circle']){const path='assets/icons/'+name+'.svg';uiIcons[path]=embedded[path]||await (async()=>{const r=await fetch(path);return 'data:image/svg+xml;base64,'+btoa(await r.text());})();}
       let app=await (await fetch('app.js')).text();const inlineIcons=Object.fromEntries(Object.entries(uiIcons).map(([path,data])=>[path.split('/').pop().replace('.svg',''),data]));app='window.ZHIXIAN_INLINE_ICONS='+JSON.stringify(inlineIcons)+';\n'+app;
       const rr=await(await fetch('renderer.js')).text();const dom=document.documentElement.cloneNode(true);dom.querySelectorAll('script,link[rel=stylesheet]').forEach(n=>n.remove());dom.querySelector('#export-dialog').removeAttribute('open');const style=document.createElement('style');style.textContent=css;dom.querySelector('head').append(style);
       dom.querySelectorAll('img').forEach(img=>{const raw=img.getAttribute('src');if(embedded[raw])img.setAttribute('src',embedded[raw]);});

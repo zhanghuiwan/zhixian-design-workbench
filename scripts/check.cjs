@@ -2,7 +2,9 @@
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..'),doc=JSON.parse(fs.readFileSync(path.join(root,'design.json'))),original=JSON.parse(fs.readFileSync(path.join(root,'source/figma-export-2026-11-12.json')));
 const flat=n=>[n,...(n.children||[]).flatMap(flat)],nodes=doc.pages.flatMap(flat),raw=original.pages.flatMap(flat);
-assert.equal(nodes.length,2010);assert.deepEqual(nodes.map(n=>n.id),raw.map(n=>n.id));
+const originalNodes=doc.pages.filter(p=>!p.id.startsWith('review:')).flatMap(flat);
+assert.equal(originalNodes.length,2010);assert.deepEqual(originalNodes.map(n=>n.id),raw.map(n=>n.id));
+assert.equal(new Set(nodes.map(n=>n.id)).size,nodes.length,'All original and review layer IDs must be unique');
 assert.equal(doc.workbench.frames.filter(f=>f.category==='screen').length,31);assert.equal(doc.workbench.frames.filter(f=>f.category==='proposal').length,4);assert.equal(doc.workbench.frames.filter(f=>f.category==='component').length,12);assert.equal(doc.variables.length,27);assert.equal(doc.workbench.routes.length,13);
 for(const n of nodes){if(n.asset)assert.ok(fs.existsSync(path.join(root,n.asset)));if(n.iconAsset)assert.ok(fs.existsSync(path.join(root,n.iconAsset)));}
 for(const p of [...Object.values(doc.assets),...doc.workbench.assetLibrary.map(a=>a.path)])assert.ok(fs.existsSync(path.join(root,p)));
@@ -23,4 +25,19 @@ const masterText=nodes.find(n=>n.id==='2:107'),child=nodes.find(n=>n.id.endsWith
 assert.equal(require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(root,'source/figma-export-2026-11-12.json'))).digest('hex'),doc.workbench.originalSha256);
 const label=nodes.find(n=>n.type==='TEXT'&&n.id.includes(';')&&r.nodes.get(n.id.split(';').pop())?.characters!==n.characters&&r.nodes.get(n.id.split(';').pop())?.type==='TEXT');
 if(label){const key=label.id.split(';').pop();r=create(doc,{nodes:{[key]:{characters:'new master label'}}});assert.equal(r.effective(label).characters,label.characters,'Existing Figma instance label overrides remain intact');}
-console.log('PASS: 2007 layers, 47 frames/components, 27 variables, 13 routes, asset integrity, no visible missing vectors, alpha, variable and component propagation.');
+const review=doc.workbench.frames.filter(f=>f.category==='review');
+if(review.length){
+  assert.equal(review.filter(f=>f.reviewKind==='screen').length,6);
+  assert.equal(review.filter(f=>f.reviewKind==='component').length,6);
+  const rs=nodes.find(n=>n.id==='review:light:study');
+  assert.ok(!flat(rs).some(n=>n.characters==='开始学习'),'Review learning has no start-learning CTA');
+  assert.ok(flat(rs).some(n=>n.type==='INSTANCE'&&n.mainComponentId==='2:56'),'Original task-card instances are reused');
+  assert.ok(flat(rs).some(n=>n.type==='INSTANCE'&&n.mainComponentId==='2:80'),'Original navigation instance is reused');
+  const instance=nodes.find(n=>n.type==='INSTANCE'&&n.mainComponentId==='review:menu:light:single');
+  assert.ok(instance);r=create(doc,{nodes:{'review:menu:light:single':{cornerRadius:24}}});
+  assert.equal(r.effective(instance).cornerRadius,24,'Review master changes propagate to instances');
+  const scroll=flat(rs).find(n=>n.workbenchScroll==='vertical');
+  assert.equal(r.render(scroll).style.overflowY,'auto','Review page contents really scroll');
+  for(const n of nodes.filter(n=>n.type==='INSTANCE'))assert.ok(nodes.some(master=>master.id===n.mainComponentId),'Every instance has a real master');
+}
+console.log(`PASS: original 2007 layers, 47 frames/components retained; ${review.length} review frames; unique IDs, assets, alpha, variables, original/new master propagation and review scrolling.`);

@@ -4,6 +4,14 @@
 - 仓库：https://github.com/zhanghuiwan/zhixian-design-workbench
 - 协作规则：[AGENTS.md](AGENTS.md)；每次改动记入 [CHANGELOG.md](CHANGELOG.md)，App 待应用项记入 [APP_SYNC.md](APP_SYNC.md)。
 
+## 本轮审查方案 · 沿用原配色
+
+[打开原工作台中的审查方案](https://zhanghuiwan.github.io/zhixian-design-workbench/#review)。左侧新增“审查方案”，包含闲闲、学习、我的及新增圆角菜单组件；提供浅深色版本。不是独立截图或展示站：图层、组件引用、颜色绑定进入 `design.json`，可在原工作台中选择、修改、撤销和导出。
+
+保留原白底灰绿、字阶、图标、角色、玻璃导航及新学/复习卡；仅将菜单改为圆角矩形，并从审查版学习页删除开始学习按钮。新菜单使用已有 `surfaceMuted` 变量，无新增或修改颜色。原有 3 个 Figma 设计页、47 个画框/组件、原始快照和颜色变量保持原值。新审查页在 `review:round-menus`，6 个主组件和 6 个页面按类别单独展示；尚未应用到 App。
+
+原始页面仍从“页面 / 组件”查看。需要重新生成审查节点时运行 `python3 scripts/add_review_round_menus.py` 后 `python3 scripts/sync_bundle.py`；该脚本只替换固定 `review:` ID 的审查节点，保留原页面。手工编辑过审查页时不要直接重跑，以免覆盖手工修改。组件来源和 App 交接见 `APP_SYNC.md`。
+
 ## 三个视觉方向 · 独立待评审提案
 
 [打开方案评审](https://zhanghuiwan.github.io/zhixian-design-workbench/explorations/)：墨白编辑式、晴空专注式、暮色陪伴式，每组含闲闲、学习、我的，共 9 页。支持同页对比、窄屏与基本交互；原工作台、原画框和设计数据保持不变。源码及范围见 [explorations/README.md](explorations/README.md)。

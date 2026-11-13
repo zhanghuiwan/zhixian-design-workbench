@@ -62,6 +62,11 @@
       el.style.transformOrigin='0 0';
       el.style.borderRadius=n.type==='ELLIPSE'?'50%': [n.topLeftRadius??n.cornerRadius??0,n.topRightRadius??n.cornerRadius??0,n.bottomRightRadius??n.cornerRadius??0,n.bottomLeftRadius??n.cornerRadius??0].map(v=>number(v)+'px').join(' ');
       if(n.clipsContent)el.style.overflow='hidden';
+      // Review frames opt in explicitly; original Figma clipping stays untouched.
+      if(n.workbenchScroll==='vertical'){
+        el.style.overflowY='auto';el.style.overflowX='hidden';el.style.scrollbarWidth='none';
+        el.style.overscrollBehavior='contain';el.dataset.reviewScroll='vertical';
+      }
       const shadows=[];
       for(const e of n.effects||[]){if(e.visible===false)continue;if(e.type==='DROP_SHADOW'||e.type==='INNER_SHADOW')shadows.push(`${e.type==='INNER_SHADOW'?'inset ':''}${e.offset?.x||0}px ${e.offset?.y||0}px ${e.radius||0}px ${e.spread||0}px ${rgba(e.color)}`);if(e.type==='GLASS'||e.type==='BACKGROUND_BLUR'){el.style.backdropFilter=`blur(${e.radius||12}px)`;el.style.webkitBackdropFilter=el.style.backdropFilter;}}
       if(shadows.length)el.style.boxShadow=shadows.join(',');
