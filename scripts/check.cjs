@@ -28,13 +28,18 @@ if(label){const key=label.id.split(';').pop();r=create(doc,{nodes:{[key]:{charac
 const review=doc.workbench.frames.filter(f=>f.category==='review');
 if(review.length){
   assert.equal(review.filter(f=>f.reviewKind==='screen').length,6);
-  assert.equal(review.filter(f=>f.reviewKind==='component').length,6);
+  assert.equal(review.filter(f=>f.reviewKind==='component').length,8);
   const rs=nodes.find(n=>n.id==='review:light:study');
   assert.ok(!flat(rs).some(n=>n.characters==='开始学习'),'Review learning has no start-learning CTA');
   assert.ok(flat(rs).some(n=>n.type==='INSTANCE'&&n.mainComponentId==='2:56'),'Original task-card instances are reused');
   assert.ok(flat(rs).some(n=>n.type==='INSTANCE'&&n.mainComponentId==='2:80'),'Original navigation instance is reused');
-  const instance=nodes.find(n=>n.type==='INSTANCE'&&n.mainComponentId==='review:menu:light:single');
-  assert.ok(instance);r=create(doc,{nodes:{'review:menu:light:single':{cornerRadius:24}}});
+  const instance=nodes.find(n=>n.type==='INSTANCE'&&n.mainComponentId==='review:group:light');
+  assert.ok(instance);
+  const flatRow=nodes.find(n=>n.type==='INSTANCE'&&n.mainComponentId==='review:menu:light:single');
+  assert.equal(flatRow.cornerRadius,0,'Group rows are flat, not separate rounded cards');
+  assert.deepEqual(flatRow.fills,[]);
+  assert.equal(flat(rs).filter(n=>n.type==='INSTANCE'&&n.mainComponentId==='review:group:light').length,2);
+  r=create(doc,{nodes:{'review:group:light':{cornerRadius:24}}});
   assert.equal(r.effective(instance).cornerRadius,24,'Review master changes propagate to instances');
   const scroll=flat(rs).find(n=>n.workbenchScroll==='vertical');
   assert.equal(r.render(scroll).style.overflowY,'auto','Review page contents really scroll');

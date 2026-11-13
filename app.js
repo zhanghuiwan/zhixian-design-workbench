@@ -71,7 +71,7 @@
   }
   function renderCanvas(){
     const canvas=$('#canvas');canvas.replaceChildren();canvas.classList.toggle('doc-canvas',['tokens','assets','handoff'].includes(view));
-    const titles={pages:'全部页面',components:'组件库',tokens:'颜色与排版',assets:'图标与图像',handoff:'开发交接',review:'审查方案 · 原配色圆角菜单'};
+    const titles={pages:'全部页面',components:'组件库',tokens:'颜色与排版',assets:'图标与图像',handoff:'开发交接',review:'审查方案 · 原配色分组菜单'};
     $('#view-title').textContent=focusFrame?effective(focusFrame).name:titles[view];$('#breadcrumbs').textContent='知闲 Android / '+(focusFrame?doc.pages.find(p=>p.id===byId(focusFrame).pageId).name:'设计资源 / '+titles[view]);
     $('#overview').hidden=!focusFrame;$('#theme-filter-label').hidden=!!focusFrame||!['pages','review'].includes(view);$('#zoom-label').hidden=!['pages','components','review'].includes(view);
     if(view==='tokens'){renderTokens(canvas);return;}if(view==='assets'){renderAssets(canvas);return;}if(view==='handoff'){renderHandoff(canvas);return;}
@@ -91,7 +91,7 @@
   }
   function renderReview(canvas){
     const intro=document.createElement('div');intro.className='review-intro';
-    intro.innerHTML='<strong>原设计 + 圆角菜单</strong><p>沿用原配色、字体、图标、闲闲角色和悬浮玻璃导航；新学 / 复习保留原组件，学习页移除“开始学习”。浅深色均可查看，菜单和页面图层可以直接选择、修改。</p><a href="explorations/">查看上一轮三个视觉方向 ↗</a>';
+    intro.innerHTML='<strong>原设计 + 分组菜单</strong><p>沿用原配色与现有组件。同类条目共用圆角容器，组内分隔；保留新学 / 复习和导航，移除“开始学习”。</p><a href="explorations/">查看上一轮三个视觉方向 ↗</a>';
     canvas.append(intro);
     const matching=matchingFrames();
     for(const section of ['页面 · 浅色','页面 · 深色','新增组件 · 浅色','新增组件 · 深色']){
